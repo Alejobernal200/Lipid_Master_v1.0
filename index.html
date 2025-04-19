@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LipidMaster - Clasificador de grupos de lípidos FAME y TAG</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      background-color: #f4f9f4;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    header {
+      background-color: #3caf69;
+      text-align: center;
+      padding: 2rem 1rem;
+      color: white;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 2rem auto;
+      padding: 2rem;
+      background-color: #fff;
+      border-radius: 12px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+      flex: 1;
+    }
+
+    .producto {
+      margin-bottom: 2.5rem;
+    }
+
+    .producto h2 {
+      color: #2b7e4f;
+    }
+
+    .botones {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-top: 1rem;
+      justify-content: center;
+    }
+
+    .botones input[type="file"] {
+      display: none;
+    }
+
+    .seleccionar,
+    .clasificar,
+    .descargar {
+      padding: 0.8rem 1.5rem;
+      border: none;
+      border-radius: 6px;
+      color: #fff;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .seleccionar {
+      background-color: #f1c40f;
+    }
+
+    .clasificar {
+      background-color: #3498db;
+    }
+
+    .descargar {
+      background-color: #2ecc71;
+    }
+
+    .seleccionar:hover {
+      background-color: #d4ac0d;
+    }
+
+    .clasificar:hover {
+      background-color: #2a80b9;
+    }
+
+    .descargar:hover {
+      background-color: #27ae60;
+    }
+
+    .image-container {
+      text-align: center;
+      margin-top: 1rem;
+    }
+
+    .image-container img {
+      max-width: 20%; /* Reduce el tamaño de la imagen */
+      height: auto;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    footer {
+      background-color: #3caf69;
+      color: white;
+      text-align: center;
+      padding: 1rem 0;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <header role="banner">
+    <h1>Lipid_Master</h1>
+    <p>Clasificador de grupos de lípidos FAME y TAG</p>
+  </header>
+
+  <div class="container">
+    <main role="main">
+      <section class="producto" aria-labelledby="fame-label">
+        <h2 id="fame-label">Clasificación FAME</h2>
+        <div class="botones">
+          <label for="fameFile" class="seleccionar">Seleccionar archivo</label>
+          <input type="file" id="fameFile" accept=".csv,.xlsx,.pdf" aria-label="Archivo para clasificación FAME" />
+          <button class="clasificar" onclick="clasificarArchivo('fameFile')">Clasificar</button>
+          <button class="descargar" onclick="descargarResultado('FAME')">Descargar resultado</button>
+        </div>
+      </section>
+
+      <section class="producto" aria-labelledby="tag-label">
+        <h2 id="tag-label">Clasificación TAG</h2>
+        <div class="botones">
+          <label for="tagFile" class="seleccionar">Seleccionar archivo</label>
+          <input type="file" id="tagFile" accept=".csv,.xlsx,.pdf" aria-label="Archivo para clasificación TAG" />
+          <button class="clasificar" onclick="clasificarArchivo('tagFile')">Clasificar</button>
+          <button class="descargar" onclick="descargarResultado('TAG')">Descargar resultado</button>
+        </div>
+        <div class="image-container">
+          <img src="https://i.imgur.com/tXc2Bic.png" alt="Imagen descriptiva de lípidos" />
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer>
+    LipidMaster V.1.0 2025 Todos los derechos reservados
+  </footer>
+
+  <script>
+    function clasificarArchivo(inputId) {
+      const fileInput = document.getElementById(inputId);
+      const file = fileInput.files[0];
+
+      if (!file) {
+        alert("Por favor selecciona un archivo antes de clasificar.");
+        return;
+      }
+
+      const validTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'text/csv'];
+      const validExtensions = ['pdf', 'xlsx', 'csv'];
+      const fileExtension = file.name.split('.').pop().toLowerCase();
+
+      if (!validExtensions.includes(fileExtension)) {
+        alert("Formato no válido. Solo se aceptan .csv, .xlsx o .pdf.");
+        return;
+      }
+
+      alert(`Clasificación en curso para: ${file.name}...`);
+      setTimeout(() => {
+        alert("¡Clasificación completada!");
+      }, 1000);
+    }
+
+    function descargarResultado(tipo) {
+      alert(`Se ha generado el archivo con la clasificación de ${tipo}. Descarga simulada.`);
+    }
+  </script>
+</body>
+</html>
