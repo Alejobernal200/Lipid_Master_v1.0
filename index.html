@@ -394,9 +394,35 @@
   </button>
 </div>
 
-<footer>Análisis de ácidos grasos y Triglicéridos - Lipid_Master V1.0 - Todos los Derechos Reservados</footer>
+footer>
+  <div class="footer-divider"></div>
+  <div class="footer-inner">
 
-<script>
+    <div class="footer-badge">⬡ &nbsp;Open Source · Uso libre</div>
+
+    <p class="footer-statement">
+      <strong>Lipid_Master</strong> es una herramienta de software libre que automatiza la clasificación
+      de resultados cromatográficos conforme a las categorías establecidas en las normas internacionales
+      <strong>ISO 12966</strong>, <strong>AOCS Official Methods (serie Ce)</strong> y <strong>AOAC 996.06</strong>.
+      Toda la lógica de clasificación implementada es conocimiento público, normalizado y de libre acceso.
+      El software no contiene ni revela datos de ninguna muestra, empresa o proceso industrial.
+      Lo que se comparte es únicamente código que aplica criterios normativos ya publicados.
+    </p>
+
+    <div class="footer-refs">
+      <div class="footer-ref-item"><span>Norma internacional</span>ISO 12966-4:2015 — FAME por cromatografía de gases capilar</div>
+      <div class="footer-ref-item"><span>Norma internacional</span>ISO 12966-1:2014 — Guías GC de ésteres metílicos</div>
+      <div class="footer-ref-item"><span>Método oficial</span>AOCS Ce 1h-05 — SFA, MUFA, PUFA en aceites</div>
+      <div class="footer-ref-item"><span>Método oficial</span>AOAC 996.06 — Grasas totales y clasificación nutricional</div>
+    </div>
+
+    <div class="footer-bottom">
+      <span>Lipid_Masterter v1.0</span>
+      <span><span class="footer-dot">·</span>Análisis de Àcidos Grasos y Triglicèridos</span>
+    </div>
+
+  </div>
+</footer>
 // ─────────────────────────────────────────────
 // FAME CLASSIFICATION MAPS
 // ─────────────────────────────────────────────
@@ -417,17 +443,6 @@ const FAME_GROUPS = {
     'C18:3 ttt','C18:3 ttc','C18:3 tct','C18:3 ctt',
     'C18:3 cct','C18:3 ctc','C18:3 tcc'
   ]
-};
-
-// aliases – map variations found in real CSV → canonical
-const FAME_ALIAS = {
-  'C16:1': 'C16:1',
-  'C16:1 t': null,           // trans C16:1 → not classified in standard groups
-  'C18:1 trans': null,
-  'C18:1 cis iso': null,
-  'C20:3 n9': null,
-  'C18:3 cct': 'C18:3 cct',
-  'C18:3 n3 cis': 'C18:3 n3 cis',
 };
 
 // ─────────────────────────────────────────────
