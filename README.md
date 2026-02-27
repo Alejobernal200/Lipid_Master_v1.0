@@ -5,7 +5,7 @@ El analista solo hace tres cosas:
 → Clic en Clasificar
 → Descargar el resultado en Excel
 
-El sistema detecta automáticamente si la muestra es FAME o TAG, aplica los criterios de las normas ISO 12966 y AOCS Official Methods, y agrupa los compuestos en sus categorías: SAFAS, MUFAS, PUFAS, TRANS — o los 10 grupos estructurales de triglicéridos.
+El sistema detecta automáticamente si la muestra es FAME o TAG, aplica los criterios de las normas ISO 12966 y AOCS Official Methods, y agrupa los compuestos en sus categorías: SAFAS, MUFAS, PUFAS, TRANS — o los 10 grupos estructurales de triglicéridos. El archivo de entrada usualmente contiene cuatro columnas: RT [min],,Type,,Width [min],,Area,Height,,,Area%,,Name,,, diferentes nombres en las tablas pueden conllevar deferencias en los resultados, en ese caso se deben realizar ajustes en el còdigo.
 
 No requiere instalación. No requiere servidor. Los datos nunca salen del equipo del analista.
 
