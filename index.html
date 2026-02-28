@@ -1,22 +1,921 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lipid Master</title>
-    <style>
-        /* Other CSS styles */
-        /* Removed text-transform: uppercase; */
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clasificador de Lípidos — FAME & TAG</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;800&family=JetBrains+Mono:wght@300;400;500&display=swap');
+
+  :root {
+    --bg: #0a0e0f;
+    --surface: #111618;
+    --border: #1e2a2d;
+    --accent: #00e5c0;
+    --accent2: #ff6b35;
+    --text: #d4e8e4;
+    --muted: #4a6b66;
+    --highlight: #00e5c01a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px 80px;
+    background-image: 
+      radial-gradient(ellipse at 10% 0%, #00e5c008 0%, transparent 50%),
+      radial-gradient(ellipse at 90% 100%, #ff6b3508 0%, transparent 50%);
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 60px;
+    position: relative;
+  }
+
+  .logo-line {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    justify-content: center;
+    margin-bottom: 12px;
+  }
+
+  .logo-icon {
+    width: 44px; height: 44px;
+    border: 2px solid var(--accent);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    box-shadow: 0 0 20px var(--accent)44;
+  }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(28px, 5vw, 48px);
+    font-weight: 800;
+    letter-spacing: -1px;
+    color: #fff;
+  }
+
+  h1 span { color: var(--accent); }
+
+  .subtitle {
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--muted);
+    margin-top: 8px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    width: 100%;
+    max-width: 680px;
+    margin-bottom: 24px;
+  }
+
+  .card-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    color: var(--muted);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .card-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .drop-zone {
+    border: 2px dashed var(--border);
+    border-radius: 12px;
+    padding: 48px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+  }
+
+  .drop-zone:hover, .drop-zone.drag-over {
+    border-color: var(--accent);
+    background: var(--highlight);
+  }
+
+  .drop-zone input[type=file] {
+    position: absolute; inset: 0;
+    opacity: 0; cursor: pointer; width: 100%; height: 100%;
+  }
+
+  .drop-icon {
+    font-size: 36px;
+    margin-bottom: 12px;
+    display: block;
+    filter: grayscale(0.3);
+  }
+
+  .drop-text {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.8;
+  }
+
+  .drop-text strong { color: var(--accent); font-weight: 500; }
+
+  .file-badge {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    background: var(--highlight);
+    border: 1px solid var(--accent)44;
+    border-radius: 8px;
+    padding: 10px 16px;
+    margin-top: 16px;
+    font-size: 12px;
+    color: var(--accent);
+  }
+
+  .file-badge.show { display: flex; }
+
+  .file-badge .fname { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 2px;
+    padding: 14px 32px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #0a0e0f;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .btn-primary:hover { filter: brightness(1.1); box-shadow: 0 0 24px var(--accent)44; }
+  .btn-primary:disabled { opacity: 0.3; cursor: not-allowed; filter: none; box-shadow: none; }
+
+  .btn-download {
+    background: var(--accent2);
+    color: #fff;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .btn-download:hover { filter: brightness(1.1); box-shadow: 0 0 24px var(--accent2)44; }
+  .btn-download:disabled { opacity: 0.3; cursor: not-allowed; filter: none; box-shadow: none; }
+
+  .result-section { display: none; }
+  .result-section.show { display: block; }
+
+  .tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 20px;
+    background: var(--bg);
+    border-radius: 10px;
+    padding: 4px;
+  }
+
+  .tab {
+    flex: 1;
+    padding: 10px;
+    text-align: center;
+    font-size: 11px;
+    letter-spacing: 2px;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .tab.active { background: var(--surface); color: var(--accent); border: 1px solid var(--border); }
+
+  .table-wrap { overflow-x: auto; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+
+  thead tr { border-bottom: 1px solid var(--accent)44; }
+
+  th {
+    padding: 8px 12px;
+    text-align: left;
+    color: var(--accent);
+    font-size: 10px;
+    letter-spacing: 2px;
+    font-weight: 500;
+  }
+
+  td { padding: 9px 12px; border-bottom: 1px solid var(--border); }
+
+  tr:last-child td { border-bottom: none; }
+
+  .tag-label {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    letter-spacing: 1px;
+    font-weight: 500;
+  }
+
+  .tag-SAFAS { background: #3a6b4422; color: #6fcf97; border: 1px solid #6fcf9744; }
+  .tag-MUFAS { background: #2d5a8e22; color: #56b3f5; border: 1px solid #56b3f544; }
+  .tag-PUFAS { background: #6b3a7a22; color: #bf7fdb; border: 1px solid #bf7fdb44; }
+  .tag-TRANS { background: #8e2d2d22; color: #f56565; border: 1px solid #f5656544; }
+  .tag-H3    { background: #8e6b2d22; color: #f5cc65; border: 1px solid #f5cc6544; }
+  .tag-H2M   { background: #8e6b2d22; color: #f5cc65; border: 1px solid #f5cc6544; }
+  .tag-H2U   { background: #2d8e6b22; color: #65f5cc; border: 1px solid #65f5cc44; }
+  .tag-HM2   { background: #6b8e2d22; color: #aaf565; border: 1px solid #aaf56544; }
+  .tag-M3    { background: #2d6b8e22; color: #65aaf5; border: 1px solid #65aaf544; }
+  .tag-HMU   { background: #8e2d6b22; color: #f565aa; border: 1px solid #f565aa44; }
+  .tag-HU2   { background: #2d8e8e22; color: #65f5f5; border: 1px solid #65f5f544; }
+  .tag-U3    { background: #6b2d8e22; color: #aa65f5; border: 1px solid #aa65f544; }
+  .tag-UM2   { background: #8e4d2d22; color: #f59965; border: 1px solid #f5996544; }
+  .tag-U2M   { background: #4d8e2d22; color: #99f565; border: 1px solid #99f56544; }
+  .tag-UNCLASSIFIED { background: #2d2d2d; color: #888; border: 1px solid #444; }
+
+  .pct { text-align: right; font-variant-numeric: tabular-nums; color: var(--text); }
+  .pct-bar-wrap { display: flex; align-items: center; gap: 8px; }
+  .pct-bar { height: 4px; border-radius: 2px; background: var(--accent); opacity: 0.6; transition: width 0.4s; }
+
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .summary-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+  }
+
+  .summary-card .val {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--accent);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .summary-card .lbl {
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--muted);
+  }
+
+  .msg {
+    font-size: 12px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    margin-top: 12px;
+    display: none;
+  }
+
+  .msg.error { background: #f5656522; border: 1px solid #f5656544; color: #f56565; display: block; }
+  .msg.info  { background: var(--highlight); border: 1px solid var(--accent)44; color: var(--accent); display: block; }
+
+  .spinner {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border: 2px solid #0a0e0f44;
+    border-top-color: #0a0e0f;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .sep { height: 1px; background: var(--border); margin: 20px 0; }
+
+  footer {
+    margin-top: 64px;
+    width: 100%;
+    max-width: 680px;
+  }
+
+  .footer-divider {
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--accent)66, transparent);
+    margin-bottom: 40px;
+  }
+
+  .footer-inner {
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 32px 36px;
+    background: var(--surface);
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .footer-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--highlight);
+    border: 1px solid var(--accent)44;
+    border-radius: 20px;
+    padding: 5px 14px;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--accent);
+    width: fit-content;
+  }
+
+  .footer-statement {
+    font-size: 13px;
+    line-height: 1.9;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .footer-statement strong {
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  .footer-refs {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 10px;
+  }
+
+  .footer-ref-item {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 10px;
+    line-height: 1.6;
+    color: var(--muted);
+  }
+
+  .footer-ref-item span {
+    display: block;
+    color: var(--accent2);
+    font-size: 9px;
+    letter-spacing: 1px;
+    margin-bottom: 3px;
+  }
+
+  .footer-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+    padding-top: 20px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .footer-dot { color: var(--accent); margin: 0 6px; }
+</style>
 </head>
 <body>
-    <h1>Clasificador grupos de lípidos FAME & TAG</h1>
-    <button>01 · Cargar archivo</button>
-    <button>02 · Procesar</button>
-    <button>03 · Resultados</button>
-    <a href="#">Descargar resultado (.xlsx)</a>
-    <footer>
-        <p>© 2026 Lipid Master. Todos los derechos reservados.</p>
-    </footer>
+
+<header>
+  <div class="logo-line">
+    <div class="logo-icon">⬡</div>
+    <h1>Lipid<span>_Master</span></h1>
+  </div>
+  <p class="subtitle">Clasificador cromatográfico de FAME &amp; TAG</p>
+</header>
+
+<!-- UPLOAD CARD -->
+<div class="card">
+  <div class="card-title">01 · Cargar archivo</div>
+  <div class="drop-zone" id="dropZone">
+    <input type="file" id="fileInput" accept=".csv,.xlsx">
+    <span class="drop-icon">📂</span>
+    <div class="drop-text">
+      <strong>Seleccionar archivo</strong> o arrastrar aquí<br>
+      Formatos admitidos: <strong>.csv</strong> · <strong>.xlsx</strong>
+    </div>
+  </div>
+  <div class="file-badge" id="fileBadge">
+    <span>📄</span>
+    <span class="fname" id="fileName">—</span>
+    <span id="fileType" style="color:var(--muted);font-size:10px;letter-spacing:1px"></span>
+  </div>
+  <div id="uploadMsg" class="msg"></div>
+</div>
+
+<!-- ACTIONS CARD -->
+<div class="card">
+  <div class="card-title">02 · Procesar</div>
+  <button class="btn btn-primary" id="btnClassify" disabled>
+    <span id="classifyIcon">⚙</span>
+    <span id="classifyLabel">Clasificar</span>
+  </button>
+  <div id="classifyMsg" class="msg"></div>
+</div>
+
+<!-- RESULTS CARD -->
+<div class="card result-section" id="resultsCard">
+  <div class="card-title">03 · Resultados</div>
+
+  <!-- summary grid filled by JS -->
+  <div class="summary-grid" id="summaryGrid"></div>
+
+  <div class="tabs" id="tabs"></div>
+  <div id="tableArea"></div>
+
+  <div class="sep"></div>
+  <button class="btn btn-download" id="btnDownload">
+    ⬇ &nbsp;Descargar resultado (.xlsx)
+  </button>
+</div>
+
+<footer>
+  <div class="footer-divider"></div>
+  <div class="footer-inner">
+
+    <div class="footer-badge">⬡ &nbsp;Open Source · Uso libre</div>
+
+    <p class="footer-statement">
+      <strong>Lipid_Master</strong> es una herramienta de software libre que automatiza la clasificación
+      de resultados cromatográficos conforme a las categorías establecidas en las normas internacionales
+      <strong>ISO 12966</strong>, <strong>AOCS Official Methods (serie Ce)</strong> y <strong>AOAC 996.06</strong>.
+      Toda la lógica de clasificación implementada es conocimiento público, normalizado y de libre acceso.
+      El software no contiene ni revela datos de ninguna muestra, empresa o proceso industrial.
+      Lo que se comparte es únicamente código que aplica criterios normativos ya publicados.
+    </p>
+
+    <div class="footer-refs">
+      <div class="footer-ref-item"><span>Norma internacional</span>ISO 12966-4:2015 — FAME por cromatografía de gases capilar</div>
+      <div class="footer-ref-item"><span>Norma internacional</span>ISO 12966-1:2014 — Guías GC de ésteres metílicos</div>
+      <div class="footer-ref-item"><span>Método oficial</span>AOCS Ce 1h-05 — SFA, MUFA, PUFA en aceites</div>
+      <div class="footer-ref-item"><span>Método oficial</span>AOAC 996.06 — Grasas totales y clasificación nutricional</div>
+    </div>
+
+    <div class="footer-bottom">
+      <span>Lipid_Master v1.0</span>
+      <span><span class="footer-dot">·</span>Cromatografía de gases<span class="footer-dot">·</span>Análisis de lípidos</span>
+      <span>Industria de grasas &amp; aceites</span>
+    </div>
+
+  </div>
+</footer>
+
+<script>
+// ─────────────────────────────────────────────
+// FAME CLASSIFICATION MAPS
+// ─────────────────────────────────────────────
+const FAME_GROUPS = {
+  SAFAS: [
+    'C4:0','C6:0','C8:0','C10:0','C11:0','C12:0','C13:0','C14:0','C15:0',
+    'C16:0','C17:0','C18:0','C20:0','C21:0','C22:0','C23:0','C24:0'
+  ],
+  MUFAS: [
+    'C14:1c','C15:1','C16:1','C17:1','C18:1 cis','C18:1 cis iso',
+    'C20:1','C22:1 n9','C24:1'
+  ],
+  PUFAS: [
+    'C18:2 n6 cis','C18:3 n6 GLA','C18:3 n3 cis','C20:2','C20:3 n9',
+    'C20:3 n6','C20:3 n3','C20:4 n6 ARA','C20:5 n3 EPA','C22:6 n6 DHA'
+  ],
+  TRANS: [
+    'C16:1 t','C18:1 trans',
+    'C18:2 tt','C18:2 ct','C18:2 tc',
+    'C18:3 ttt','C18:3 ttc','C18:3 tct','C18:3 ctt',
+    'C18:3 cct','C18:3 ctc','C18:3 tcc'
+  ]
+};
+
+// ─────────────────────────────────────────────
+// TAG CLASSIFICATION MAP
+// ─────────────────────────────────────────────
+const TAG_GROUPS = {
+  H3:  ['PPP','PPS','PSS','SSS'],
+  H2M: ['LaPP','MPP'],
+  H2U: ['POP','PLP','POS','PLS','SOS'],
+  HM2: ['LaLaP','LaPM'],
+  M3:  ['CyLaLa','CLaLa','CyLaM','LaLaLa','LaLaM','MMLa','MMM'],
+  HMU: ['MOP','MLP'],
+  HU2: ['POO','PLO','PLL','SOO','SLO'],
+  U3:  ['OOO','OLO','OLL','LLL','LLLn','LnLLn','LnLnLn'],
+  UM2: ['LaLaO','MML','LaOM','MOM'],
+  U2M: ['MOO']
+};
+
+// extended: some reports have "/", "+", spaces
+function normalizeTagName(s){
+  return s.replace(/\s*\/\s*/g,'/').replace(/\s*\+\s*/g,'+').trim();
+}
+
+// ─────────────────────────────────────────────
+// DETECTION: FAME or TAG?
+// ─────────────────────────────────────────────
+function detectType(rows){
+  // rows = [{name, areaPct}]
+  const names = rows.map(r=>r.name.toUpperCase());
+  const famePat = /^C\d+:\d+/;
+  const fameCount = names.filter(n=>famePat.test(n)).length;
+  if(fameCount > 2) return 'FAME';
+  return 'TAG';
+}
+
+// ─────────────────────────────────────────────
+// CSV PARSER — handles the chromatography format
+// ─────────────────────────────────────────────
+function parseCSV(text){
+  const lines = text.split(/\r?\n/);
+  // find header row: must contain RT [min] or similar + Name + Area%
+  let headerIdx = -1;
+  for(let i=0;i<lines.length;i++){
+    const l = lines[i].replace(/"/g,'');
+    if((l.includes('Area%') || l.includes('Area %')) && l.includes('Name')){
+      headerIdx = i; break;
+    }
+  }
+  if(headerIdx < 0) throw new Error('No se encontró la cabecera (Area%, Name) en el archivo.');
+
+  const raw = lines[headerIdx].split(',').map(c=>c.replace(/"/g,'').trim());
+  const areaPctIdx = raw.findIndex(c=>c.includes('Area%') || c.includes('Area %'));
+  let nameIdx = raw.lastIndexOf('Name');
+  if(nameIdx<0) nameIdx = raw.findIndex(c=>c==='Name');
+
+  const rows = [];
+  for(let i=headerIdx+1;i<lines.length;i++){
+    const cells = lines[i].split(',').map(c=>c.replace(/^"|"$/g,'').trim());
+    if(!cells || cells.length < 3) continue;
+    const name = nameIdx>=0 ? cells[nameIdx] : '';
+    const areaPctRaw = areaPctIdx>=0 ? cells[areaPctIdx] : '';
+    const areaPct = parseFloat(areaPctRaw);
+    if(!name || isNaN(areaPct)) continue;
+    if(name.toLowerCase().includes('sum')) continue;
+    rows.push({name, areaPct});
+  }
+  return rows;
+}
+
+// ─────────────────────────────────────────────
+// XLSX PARSER
+// ─────────────────────────────────────────────
+function parseXLSX(buffer){
+  const wb = XLSX.read(buffer, {type:'array'});
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  const data = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+
+  let headerIdx = -1;
+  for(let i=0;i<data.length;i++){
+    const row = data[i].map(c=>String(c));
+    if(row.some(c=>c.includes('Area%')||c.includes('Area %')) && row.some(c=>c==='Name')){
+      headerIdx=i; break;
+    }
+  }
+  if(headerIdx<0) throw new Error('No se encontró la cabecera en el archivo XLSX.');
+
+  const hdr = data[headerIdx].map(c=>String(c).trim());
+  const areaPctIdx = hdr.findIndex(c=>c.includes('Area%')||c.includes('Area %'));
+  const nameIdx = hdr.lastIndexOf('Name')>=0 ? hdr.lastIndexOf('Name') : hdr.findIndex(c=>c==='Name');
+
+  const rows=[];
+  for(let i=headerIdx+1;i<data.length;i++){
+    const cells=data[i].map(c=>String(c).trim());
+    const name = nameIdx>=0 ? cells[nameIdx] : '';
+    const areaPct = parseFloat(areaPctIdx>=0 ? cells[areaPctIdx] : '');
+    if(!name || isNaN(areaPct)) continue;
+    if(name.toLowerCase().includes('sum')) continue;
+    rows.push({name, areaPct});
+  }
+  return rows;
+}
+
+// ─────────────────────────────────────────────
+// CLASSIFY
+// ─────────────────────────────────────────────
+function classifyFAME(rows){
+  // build lookup: canonical name → areaPct (sum in case of duplicates)
+  const map = {};
+  for(const r of rows){
+    const key = r.name.trim();
+    map[key] = (map[key]||0) + r.areaPct;
+  }
+
+  const result = {};
+  const unclassified = [];
+
+  for(const [group, members] of Object.entries(FAME_GROUPS)){
+    result[group] = {members:[], sum:0};
+    for(const m of members){
+      const val = map[m];
+      if(val !== undefined){
+        result[group].members.push({name:m, areaPct:val});
+        result[group].sum += val;
+        delete map[m];
+      }
+    }
+  }
+
+  // remaining unmatched
+  for(const [name, areaPct] of Object.entries(map)){
+    unclassified.push({name, areaPct});
+  }
+
+  return {result, unclassified, type:'FAME'};
+}
+
+function classifyTAG(rows){
+  const map = {};
+  for(const r of rows){
+    const key = normalizeTagName(r.name);
+    map[key] = (map[key]||0) + r.areaPct;
+  }
+
+  const result = {};
+  const unclassified = [];
+
+  for(const [group, members] of Object.entries(TAG_GROUPS)){
+    result[group] = {members:[], sum:0};
+    for(const m of members){
+      const key = normalizeTagName(m);
+      // check direct match or partial (e.g. "POP" inside "POP+POLn")
+      let matched = false;
+      for(const [k,v] of Object.entries(map)){
+        if(k === key || k.startsWith(key+'+') || k.startsWith(key+'/')){
+          result[group].members.push({name:k, areaPct:v});
+          result[group].sum += v;
+          delete map[k];
+          matched = true;
+          break;
+        }
+      }
+    }
+  }
+
+  for(const [name, areaPct] of Object.entries(map)){
+    unclassified.push({name, areaPct});
+  }
+
+  return {result, unclassified, type:'TAG'};
+}
+
+// ─────────────────────────────────────────────
+// RENDER RESULTS
+// ─────────────────────────────────────────────
+let lastClassification = null;
+
+function renderResults(classif){
+  lastClassification = classif;
+  const {result, unclassified, type} = classif;
+
+  // summary grid
+  const sg = document.getElementById('summaryGrid');
+  sg.innerHTML = '';
+  let total = 0;
+  for(const g of Object.values(result)) total += g.sum;
+
+  for(const [group, data] of Object.entries(result)){
+    if(data.sum===0) continue;
+    const card = document.createElement('div');
+    card.className='summary-card';
+    card.innerHTML=`<div class="val">${data.sum.toFixed(2)}<span style="font-size:12px;color:var(--muted)">%</span></div>
+                    <div class="lbl">${group}</div>`;
+    sg.appendChild(card);
+  }
+
+  // tabs
+  const tabsEl = document.getElementById('tabs');
+  tabsEl.innerHTML = '';
+  const groups = Object.keys(result).filter(g=>result[g].sum>0);
+  if(unclassified.length) groups.push('No clasificado');
+
+  groups.forEach((g,i)=>{
+    const t=document.createElement('div');
+    t.className='tab'+(i===0?' active':'');
+    t.textContent=g;
+    t.addEventListener('click',()=>{
+      document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+      t.classList.add('active');
+      renderTable(g, result, unclassified);
+    });
+    tabsEl.appendChild(t);
+  });
+
+  renderTable(groups[0]||'', result, unclassified);
+  document.getElementById('resultsCard').classList.add('show');
+}
+
+function renderTable(group, result, unclassified){
+  const area = document.getElementById('tableArea');
+  let rows;
+  if(group==='No clasificado'){
+    rows = unclassified;
+  } else {
+    rows = result[group]?.members || [];
+  }
+
+  if(!rows.length){
+    area.innerHTML='<p style="color:var(--muted);font-size:12px;padding:16px 0">Sin compuestos en este grupo.</p>';
+    return;
+  }
+
+  const maxPct = Math.max(...rows.map(r=>r.areaPct),0.01);
+  const sum = rows.reduce((a,r)=>a+r.areaPct,0);
+
+  let html=`<div class="table-wrap"><table>
+    <thead><tr>
+      <th>Nombre</th>
+      <th>Grupo</th>
+      <th style="text-align:right">Área %</th>
+      <th style="min-width:100px">Distribución</th>
+    </tr></thead><tbody>`;
+
+  for(const r of rows){
+    const barW = Math.round((r.areaPct/maxPct)*100);
+    const cls = group==='No clasificado' ? 'tag-UNCLASSIFIED' : `tag-${group}`;
+    html+=`<tr>
+      <td>${r.name}</td>
+      <td><span class="tag-label ${cls}">${group}</span></td>
+      <td class="pct">${r.areaPct.toFixed(3)}</td>
+      <td><div class="pct-bar-wrap"><div class="pct-bar" style="width:${barW}%"></div></div></td>
+    </tr>`;
+  }
+
+  html+=`<tr style="border-top:1px solid var(--accent)44">
+    <td><strong>Total</strong></td><td></td>
+    <td class="pct"><strong>${sum.toFixed(3)}</strong></td><td></td>
+  </tr>`;
+  html+='</tbody></table></div>';
+  area.innerHTML=html;
+}
+
+// ─────────────────────────────────────────────
+// EXPORT TO XLSX
+// ─────────────────────────────────────────────
+function exportXLSX(){
+  const {result, unclassified, type} = lastClassification;
+  const wb = XLSX.utils.book_new();
+
+  // Sheet 1: summary
+  const summaryData = [['Grupo','Sumatoria Área %']];
+  for(const [g,d] of Object.entries(result)){
+    summaryData.push([g, parseFloat(d.sum.toFixed(4))]);
+  }
+  const wsSum = XLSX.utils.aoa_to_sheet(summaryData);
+  styleSheet(wsSum, summaryData.length);
+  XLSX.utils.book_append_sheet(wb, wsSum, 'Resumen');
+
+  // Sheet per group
+  for(const [g,d] of Object.entries(result)){
+    if(!d.members.length) continue;
+    const sheetData=[['Nombre','Área %']];
+    for(const m of d.members){
+      sheetData.push([m.name, parseFloat(m.areaPct.toFixed(4))]);
+    }
+    sheetData.push(['Total', parseFloat(d.sum.toFixed(4))]);
+    const ws = XLSX.utils.aoa_to_sheet(sheetData);
+    XLSX.utils.book_append_sheet(wb, ws, g.slice(0,31));
+  }
+
+  // Unclassified
+  if(unclassified.length){
+    const unc=[['Nombre','Área %'],...unclassified.map(r=>[r.name,parseFloat(r.areaPct.toFixed(4))])];
+    const ws=XLSX.utils.aoa_to_sheet(unc);
+    XLSX.utils.book_append_sheet(wb, ws, 'No Clasificado');
+  }
+
+  XLSX.writeFile(wb, `lipid_master_${type}_${Date.now()}.xlsx`);
+}
+
+function styleSheet(ws, nrows){
+  // set column widths
+  ws['!cols']=[{wch:28},{wch:18}];
+}
+
+// ─────────────────────────────────────────────
+// EVENT WIRING
+// ─────────────────────────────────────────────
+let parsedRows = null;
+
+const fileInput = document.getElementById('fileInput');
+const dropZone = document.getElementById('dropZone');
+
+function handleFile(file){
+  if(!file){ return; }
+  const ext = file.name.split('.').pop().toLowerCase();
+  if(!['csv','xlsx'].includes(ext)){
+    showMsg('uploadMsg', 'Formato no soportado. Use .csv o .xlsx', 'error');
+    return;
+  }
+
+  document.getElementById('fileName').textContent = file.name;
+  document.getElementById('fileType').textContent = ext.toUpperCase();
+  document.getElementById('fileBadge').classList.add('show');
+  clearMsg('uploadMsg');
+  document.getElementById('btnClassify').disabled = false;
+  parsedRows = null;
+
+  const reader = new FileReader();
+  if(ext==='csv'){
+    reader.onload = e => {
+      try {
+        parsedRows = parseCSV(e.target.result);
+        showMsg('uploadMsg', `✓ ${parsedRows.length} compuestos detectados`, 'info');
+      } catch(err){ showMsg('uploadMsg', err.message, 'error'); }
+    };
+    reader.readAsText(file, 'utf-8');
+  } else {
+    reader.onload = e => {
+      try {
+        parsedRows = parseXLSX(new Uint8Array(e.target.result));
+        showMsg('uploadMsg', `✓ ${parsedRows.length} compuestos detectados`, 'info');
+      } catch(err){ showMsg('uploadMsg', err.message, 'error'); }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+}
+
+fileInput.addEventListener('change', e => handleFile(e.target.files[0]));
+
+dropZone.addEventListener('dragover', e=>{ e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', ()=>dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e=>{
+  e.preventDefault(); dropZone.classList.remove('drag-over');
+  handleFile(e.dataTransfer.files[0]);
+});
+
+document.getElementById('btnClassify').addEventListener('click', ()=>{
+  if(!parsedRows){ showMsg('classifyMsg','Primero cargue un archivo.','error'); return; }
+  clearMsg('classifyMsg');
+  document.getElementById('classifyIcon').innerHTML='<span class="spinner"></span>';
+  document.getElementById('classifyLabel').textContent='Clasificando...';
+  document.getElementById('btnClassify').disabled=true;
+
+  setTimeout(()=>{
+    try {
+      const type = detectType(parsedRows);
+      let classif;
+      if(type==='FAME') classif = classifyFAME(parsedRows);
+      else classif = classifyTAG(parsedRows);
+
+      renderResults(classif);
+      showMsg('classifyMsg', `✓ Clasificación ${type} completada — ${parsedRows.length} compuestos procesados`, 'info');
+    } catch(err){
+      showMsg('classifyMsg', err.message, 'error');
+    }
+    document.getElementById('classifyIcon').textContent='⚙';
+    document.getElementById('classifyLabel').textContent='Clasificar';
+    document.getElementById('btnClassify').disabled=false;
+  }, 300);
+});
+
+document.getElementById('btnDownload').addEventListener('click', ()=>{
+  if(!lastClassification){ return; }
+  exportXLSX();
+});
+
+function showMsg(id, text, type){
+  const el=document.getElementById(id);
+  el.textContent=text;
+  el.className='msg '+type;
+}
+function clearMsg(id){
+  const el=document.getElementById(id);
+  el.textContent='';
+  el.className='msg';
+}
+</script>
 </body>
 </html>
